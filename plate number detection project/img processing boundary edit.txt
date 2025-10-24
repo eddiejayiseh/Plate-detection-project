@@ -1,0 +1,132 @@
+import cv2
+import numpy as np
+
+# Load the Haar Cascade for number plate detection
+numberPlateCascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_russian_plate_number.xml")
+
+# Read the input image
+img = cv2.imread('1.jpg')
+
+# Convert the image to grayscale
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+# Display the grayscale image
+cv2.imshow('Grayscale', gray)
+
+# Apply binary thresholding to the grayscale image
+_, binary = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY)
+
+# Display the binary image
+cv2.imshow('Binary', binary)
+
+# Apply bilateral filter to reduce noise while keeping edges sharp
+bilateral = cv2.bilateralFilter(img, 9, 75, 75)
+
+# Convert the bilateral-filtered image to grayscale for edge detection
+gray_bilateral = cv2.cvtColor(bilateral, cv2.COLOR_BGR2GRAY)
+
+# Use Canny edge detection
+edges = cv2.Canny(gray_bilateral, 100, 200)
+
+# Display the edges detected by Canny
+cv2.imshow('Edges', edges)
+
+# Use Hough Line Transform to detect lines on the edges
+lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 200, minLineLength=50, maxLineGap=10)
+
+# Draw the detected lines (if any)
+if lines is not None:
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        cv2.line(img, (x1, y1), (x2, y2), (0, 200, 0), 1)
+
+# Detect plates using the Haar Cascade classifier
+plates = numberPlateCascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5, minSize=(5, 5))
+
+# percentage of the box you want to discard on each side
+MARGIN_X = 0.10   # 10 % from left & right
+MARGIN_Y = 0.15   # 15 % from top & bottom
+
+for (x, y, w, h) in plates:
+    # --- shrink the rectangle -------------------------------------------
+    x1 = int(x + MARGIN_X * w)            # left
+    y1 = int(y + MARGIN_Y * h)            # top
+    x2 = int(x + w - MARGIN_X * w)        # right
+    y2 = int(y + h - MARGIN_Y * h)        # bottom
+    # guard against negative values (edge cases)
+    x1, y1 = max(0, x1), max(0, y1)
+
+    # ---------------------------------------------------------------------
+    # draw the tighter rectangle (red, 2‑pixel thick)
+    cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+
+    # optional: crop this cleaner ROI for OCR or further processing
+    plate_roi = img[y1:y2, x1:x2]
+    # ...do whatever you need with plate_roi...
+
+
+# Display the final detection with the plates highlighted
+cv2.imshow('Plate Detection', img)
+
+# Wait for key press to close all windows
+if cv2.waitKey(0) & 0xFF == ord('q'):
+    cv2.destroyAllWindows()
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+import cv2
+import numpy as np
+
+# Load the Haar Cascade for number plate detection
+numberPlateCascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_russian_plate_number.xml")
+
+# Read the input image
+img = cv2.imread('car9.jpg')
+
+# Convert the image to grayscale
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+# Display the grayscale image
+cv2.imshow('Grayscale', gray)
+
+# Apply binary thresholding to the grayscale image
+_, binary = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY)
+
+# Display the binary image
+cv2.imshow('Binary', binary)
+
+# Apply bilateral filter to reduce noise while keeping edges sharp
+bilateral = cv2.bilateralFilter(img, 9, 75, 75)
+
+# Convert the bilateral-filtered image to grayscale for edge detection
+gray_bilateral = cv2.cvtColor(bilateral, cv2.COLOR_BGR2GRAY)
+
+# Use Canny edge detection
+edges = cv2.Canny(gray_bilateral, 100, 200)
+
+# Display the edges detected by Canny
+cv2.imshow('Edges', edges)
+
+# Use Hough Line Transform to detect lines on the edges
+lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 200, minLineLength=50, maxLineGap=10)
+
+# Draw the detected lines (if any)
+if lines is not None:
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        cv2.line(img, (x1, y1), (x2, y2), (0, 200, 0), 1)
+
+# Detect plates using the Haar Cascade classifier
+plates = numberPlateCascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5, minSize=(5, 5))
+
+# Draw rectangles around the detected plates
+for (x, y, w, h) in plates:
+    cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 1)
+
+# Display the final detection with the plates highlighted
+cv2.imshow('Plate Detection', img)
+
+# Wait for key press to close all windows
+if cv2.waitKey(0) & 0xFF == ord('q'):
+    cv2.destroyAllWindows()
